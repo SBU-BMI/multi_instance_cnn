@@ -105,14 +105,14 @@ class FG_Mask:
         fg_output_dir = '{}/patch_size_{}_{}_scale_{}/fg_masks'.format(
             self.mask_root, self.patch_size[0], self.patch_size[1], self.scale
         )
-        ensure_dir(fg_output_dir)
+
         fg_log_fn = '{}/{}_fg_mask.log'.format(fg_output_dir, wsi_id)
         fg_fn = '{}/{}_fg_mask.pth'.format(fg_output_dir, wsi_id)
 
         disc_output_dir = '{}/patch_size_{}_{}_scale_{}/disc_masks_round_0'.format(
             self.mask_root, self.patch_size[0], self.patch_size[1], self.scale
         )
-        ensure_dir(disc_output_dir)
+
         disc_fn = '{}/{}_disc_mask.pth'.format(disc_output_dir, wsi_id)
 
         if os.path.isfile(fg_fn) and os.path.isfile(disc_fn):
@@ -378,6 +378,17 @@ class FG_Mask:
                 continue
             else:
                 wsi_path_list_with_labels.append(wsi_path)
+
+                
+        fg_output_dir = '{}/patch_size_{}_{}_scale_{}/fg_masks'.format(
+            self.mask_root, self.patch_size[0], self.patch_size[1], self.scale
+        )
+        ensure_dir(fg_output_dir)
+
+        disc_output_dir = '{}/patch_size_{}_{}_scale_{}/disc_masks_round_0'.format(
+            self.mask_root, self.patch_size[0], self.patch_size[1], self.scale
+        )
+        ensure_dir(disc_output_dir)
 
         if ncores > 1:
             p = Pool(ncores)
