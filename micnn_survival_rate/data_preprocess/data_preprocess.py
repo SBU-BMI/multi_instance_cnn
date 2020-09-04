@@ -251,7 +251,7 @@ class FG_Mask:
                 else:
                     disc_mask_t = torch.from_numpy((disc_wh_t <= wh_th).astype(np.uint8))
 
-                disc_mask[t_row_start:t_row_end, t_col_start:t_col_end] = disc_mask_t
+                disc_mask[t_row_start:t_row_end, t_col_start:t_col_end] = disc_mask_t * fg_mask[t_row_start:t_row_end, t_col_start:t_col_end]
 
         torch.save(fg_mask, fg_fn)
         torch.save(disc_mask, disc_fn)
