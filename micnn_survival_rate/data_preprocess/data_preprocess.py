@@ -239,9 +239,12 @@ class FG_Mask:
                 if MAX_NUM < 1:
                     continue
                 disc_wh_t_flat = disc_wh_t.flatten()
-                # partition disc_wh_t_flat, from 0th to MAX_NUM th values are less than from MAX_NUM th to end values
-                partitioned_ind = np.argpartition(disc_wh_t_flat, MAX_NUM)
-                wh_th = np.min(disc_wh_t_flat[partitioned_ind][:MAX_NUM])
+                if MAX_NUM >= disc_wh_t_flat.shape[0]:
+                    wh_th = disc_wh_t_flat.max()
+                else:
+                    # partition disc_wh_t_flat, from 0th to MAX_NUM th values are less than from MAX_NUM th to end values
+                    partitioned_ind = np.argpartition(disc_wh_t_flat, MAX_NUM)
+                    wh_th = np.max(disc_wh_t_flat[partitioned_ind][:MAX_NUM])
                 
                 if wh_th == 1:
                     disc_mask_t = torch.from_numpy((disc_wh_t < wh_th).astype(np.uint8))

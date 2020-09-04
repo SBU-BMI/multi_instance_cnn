@@ -33,7 +33,7 @@
 
     "train_ratio": 0.6,
     "validation_ratio": 0.2,
-    "max_num_patches": 20000,
+    "max_num_patches": 2000,
     "scales": [1, 4],
     "use_rgb_only": false,
     "intermediate": "/data02/shared/huidong/BMI_project/micnn_survival_rate/intermediate",
