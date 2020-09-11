@@ -144,7 +144,7 @@ class PatchCNN_EM:
                     
                     if prev_wsi_no != wsi_no:
                         if prev_wsi_no >= 0:
-                            self._smooth_save_mask(disc_mask, wsi_no)
+                            self._smooth_save_mask(disc_mask, prev_wsi_no)
                         disc_mask = torch.zeros((n_rows, n_cols))
                         prev_wsi_no = wsi_no
 
