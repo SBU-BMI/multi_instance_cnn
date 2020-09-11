@@ -197,6 +197,7 @@ class PatchCNN_EM:
         self.net.eval()
 
         prev_wsi_no = -1
+        prev_label = -1
         with torch.no_grad():
             for idx, data in enumerate(data_loader, 0):
                 patches, labels, cols, rows, n_cols_s, n_rows_s, wsi_nos = data
@@ -215,11 +216,12 @@ class PatchCNN_EM:
 
                     if prev_wsi_no != wsi_no:
                         if prev_wsi_no >= 0:
-                            self._compute_save_feat(pred_mat, pred_prob, wsi_no, label, output_dir)
+                            self._compute_save_feat(pred_mat, pred_prob, prev_wsi_no, prev_label, output_dir)
                         pred_mat = torch.ones((n_rows, n_cols), dtype=torch.int16)
                         pred_prob = torch.zeros((n_rows, n_cols), dtype=torch.float32)
                         pred_mat.fill_(-1)
                         prev_wsi_no = wsi_no
+                        prev_label = label
 
                     pred_prob[row - 1, col - 1] = prob
                     pred_mat[row - 1, col - 1] = predict_label
