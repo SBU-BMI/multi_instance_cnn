@@ -230,10 +230,10 @@ class Scheduler:
                 )
                 eval_loader = torch.utils.data.DataLoader(
                     patch_dataset_train_4E,
-                    batch_size=1,
+                    batch_size=self.batch_size,
                     shuffle=False,
                     num_workers=self.num_workers,
-                    drop_last=self.drop_last
+                    drop_last=False
                 )
                 # need to test to see which loader is faster
                 # eval_loader = patch_dataset_train_4E.sequential_loader()
@@ -251,10 +251,10 @@ class Scheduler:
             ##########################################################
             eval_loader = torch.utils.data.DataLoader(
                 patch_dataset_train_4E,
-                batch_size=1,
+                batch_size=self.batch_size,
                 shuffle=False,
                 num_workers=self.num_workers,
-                drop_last=self.drop_last
+                drop_last=False
             )
             # need to test to see which loader is faster
             # eval_loader = patch_dataset_train_4E.sequential_loader()
@@ -263,10 +263,10 @@ class Scheduler:
 
             test_loader = torch.utils.data.DataLoader(
                 patch_dataset_test,
-                batch_size=1,
+                batch_size=self.batch_size,
                 shuffle=False,
                 num_workers=self.num_workers,
-                drop_last=self.drop_last
+                drop_last=False
             )
             # need to test to see which loader is faster
             # eval_loader = patch_dataset_train_4E.sequential_loader()

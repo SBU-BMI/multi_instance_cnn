@@ -155,6 +155,8 @@ class PatchCNN_EM:
                     if self.verbose > 0:
                         print(log_str)
 
+            self._smooth_save_mask(disc_mask, wsi_no)
+
     def set_train_loader(self, train_loader):
         self.train_loader = train_loader
 
@@ -225,5 +227,7 @@ class PatchCNN_EM:
 
                     pred_prob[row - 1, col - 1] = prob
                     pred_mat[row - 1, col - 1] = predict_label
+
+            self._compute_save_feat(pred_mat, pred_prob, wsi_no, label, output_dir)
 
 
