@@ -76,7 +76,7 @@ class PatchCNN_EM:
         else:
             self.epoch, fn = max(model_ids, key=lambda item: item[0])
             self.net.load_state_dict(torch.load('{}/{}.pth'.format(
-                self.model_path_round, fn))
+                model_path_round, fn))
             )
             print('{}.pth for patch classification loaded!'.format(fn))
 
