@@ -67,7 +67,7 @@ class PatchCNN_EM:
         self.criterion = torch.nn.CrossEntropyLoss()
 
     def _load_last_model(self):
-        models = glob('{}/*.pth'.format(self.model_path))
+        models = glob('{}/*.pth'.format(self.model_path_prev_round))
         model_ids = [(int(f.split('_')[2]), f) for f in [p.split('/')[-1].split('.')[0] for p in models]]
         if not model_ids:
             self.epoch = 1
@@ -75,20 +75,24 @@ class PatchCNN_EM:
         else:
             self.epoch, fn = max(model_ids, key=lambda item: item[0])
             self.net.load_state_dict(torch.load('{}/{}.pth'.format(
-                self.model_path, fn))
+                self.model_path_prev_round, fn))
             )
             print('{}.pth for patch classification loaded!'.format(fn))
 
     def _save_model(self, epoch, iteration):
-        torch.save(self.net.state_dict(), '{0}/net_epoch_{1}_iter_{2}.pth'.format(self.model_path, epoch, iteration))
+        torch.save(self.net.state_dict(), '{0}/net_epoch_{1}_iter_{2}.pth'.format(self.model_path_round, epoch, iteration))
 
     def set_round_no(self, round_no):
         assert round_no >= 0, 'round_no (round number) should be greater than or equal to 0'
         self.round_no = round_no
+        self.model_path_round = '{}/round_{}'.format(self.model_path, self.round_no)
+        ensure_dir(self.model_path_round)
+        self.model_path_prev_round = '{}/round_{}'.format(self.model_path, self.round_no - 1)
 
     def m_step(self):
         self._load_last_model()
         self.net.train()
+        self.epoch = 1
         max_numIters = len(self.train_loader.dataset) // self.train_loader.batch_size
         while self.epoch <= self.n_epochs:
             running_loss = 0.0
@@ -168,7 +172,7 @@ class PatchCNN_EM:
 
     def _smooth_save_mask(self, disc_mask, wsi_no):
         wsi_id = self.no_wsi_id[wsi_no]
-        fg_mask = torch.load('{0}/fg_masks/{1}_fg_mask.pth'.format(self.mask_dir, wsi_id))
+        valid_mask = torch.load('{0}/disc_masks_round_0/{1}_disc_mask.pth'.format(self.mask_dir, wsi_id))
         disc_mask_np = disc_mask.numpy()
         disc_mask_np_sm = ndimage.gaussian_filter(disc_mask_np, sigma=self.smooth_sigma)
         kmeans = KMeans(n_clusters=2, random_state=0).fit(disc_mask_np_sm.reshape((-1, 1)))
@@ -177,7 +181,7 @@ class PatchCNN_EM:
         thre = min(kmeans_thre, quantile_thre)
         disc_mask_np_bin = disc_mask_np_sm >= thre
         disc_mask = torch.from_numpy(disc_mask_np_bin.astype(np.uint8)).type(torch.uint8)
-        disc_mask = disc_mask * fg_mask
+        disc_mask = disc_mask * valid_mask
         fn = '{0}/disc_masks_round_{1}/{2}_disc_mask.pth'.format(self.mask_dir, self.round_no, wsi_id)
         # need to debug to see disc_mask data type, debuged, it's bytetensor
         torch.save(disc_mask, fn)
