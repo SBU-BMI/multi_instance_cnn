@@ -66,8 +66,9 @@ class PatchCNN_EM:
         self.sm = torch.nn.Softmax(dim=1)
         self.criterion = torch.nn.CrossEntropyLoss()
 
-    def _load_last_model(self):
-        models = glob('{}/*.pth'.format(self.model_path_prev_round))
+    def _load_last_model(self, round_no):
+        model_path_round = '{}/round_{}'.format(self.model_path, round_no)
+        models = glob('{}/*.pth'.format(model_path_round))
         model_ids = [(int(f.split('_')[2]), f) for f in [p.split('/')[-1].split('.')[0] for p in models]]
         if not model_ids:
             self.epoch = 1
@@ -75,7 +76,7 @@ class PatchCNN_EM:
         else:
             self.epoch, fn = max(model_ids, key=lambda item: item[0])
             self.net.load_state_dict(torch.load('{}/{}.pth'.format(
-                self.model_path_prev_round, fn))
+                self.model_path_round, fn))
             )
             print('{}.pth for patch classification loaded!'.format(fn))
 
@@ -87,10 +88,9 @@ class PatchCNN_EM:
         self.round_no = round_no
         self.model_path_round = '{}/round_{}'.format(self.model_path, self.round_no)
         ensure_dir(self.model_path_round)
-        self.model_path_prev_round = '{}/round_{}'.format(self.model_path, self.round_no - 1)
 
     def m_step(self):
-        self._load_last_model()
+        self._load_last_model(self.round_no - 1)
         self.net.train()
         self.epoch = 1
         max_numIters = len(self.train_loader.dataset) // self.train_loader.batch_size
@@ -126,7 +126,7 @@ class PatchCNN_EM:
             self.epoch += 1
 
     def e_step(self):
-        self._load_last_model()
+        self._load_last_model(self.round_no)
         self.net.eval()
         max_numIters = len(self.eval_loader.dataset) // self.eval_loader.batch_size
         
@@ -199,7 +199,7 @@ class PatchCNN_EM:
         np.save(fn_prob, pred_prob)
 
     def hist_feat(self, data_loader, output_dir):
-        self._load_last_model()
+        self._load_last_model(self.round_no)
         self.net.eval()
 
         prev_wsi_no = -1
