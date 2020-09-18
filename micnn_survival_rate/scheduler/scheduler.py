@@ -291,6 +291,22 @@ class Scheduler:
         print('Testing Average Precision (AP): {0:.4f}, Accuracy: {1:.4f}'.format(ap, acc))
 
     def test_mil(self):
+        patch_dataset_train, patch_dataset_train_4E, patch_dataset_test = self._init_patch_datasets()
+
+        wsi_ids_train = patch_dataset_train.get_wsi_id_no().keys()
+        wsi_ids_test = patch_dataset_test.get_wsi_id_no().keys()
+        
+        val_test_ratio = self.validation_ratio / (1 - self.train_ratio)
+        self.svm_cls = wsi_cls.WSI_cls(
+            train_path=self.train_feature_root,
+            test_path=self.test_feature_root,
+            svm_root=self.svm_root,
+            wsi_ids_train=wsi_ids_train,
+            wsi_ids_test=wsi_ids_test,
+            scales=self.scales,
+            val_test_ratio=val_test_ratio
+        )
+
         ap, acc = self.svm_cls.test()
         print('Testing Average Precision (AP): {0:.4f}, Accuracy: {1:.4f}'.format(ap, acc))
 

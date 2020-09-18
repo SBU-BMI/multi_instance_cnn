@@ -26,10 +26,10 @@ if __name__ == '__main__':
     else:
         raise AssertionError("Configuration file need to be specified. Add '-c config.json', for example.")
 
-    if args.gpu_id:
+    if args.gpu_ids:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_ids
 
-    device = torch.device("cuda:{0}".format(args.gpu_id) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:{0}".format(args.gpu_ids) if torch.cuda.is_available() else "cpu")
 
     test(args, config, device)
 
