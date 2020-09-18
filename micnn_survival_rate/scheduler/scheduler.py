@@ -218,7 +218,7 @@ class Scheduler:
                     device=self.device
                 )
 
-                if not args.no_em:
+                if not self.args.no_em:
                     for round_i in range(1, self.n_rounds + 1):
                         train_loader = torch.utils.data.DataLoader(
                             patch_dataset_train,
