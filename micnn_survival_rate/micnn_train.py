@@ -14,11 +14,16 @@ def train(args, config, device):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PyTorch MICNN')
     parser.add_argument('-c', '--config', default=None, type=str,
-                           help='config file path (default: None)')
+                        help='config file path (default: None)')
     parser.add_argument('-g', '--gpu_ids', default='0', type=str,
-                           help='indices of GPUs to enable (default: 0)')
+                        help='indices of GPUs to enable (default: 0)')
     parser.add_argument('--fg', action='store_true', default=False,
-                           help='compute foreground')      
+                        help='compute foreground')
+    parser.add_argument('--no_em', action='store_true', default=False,
+                        help='directly used trained models by EM')
+    parser.add_argument('--svm_only', action='store_true', default=False,
+                        help='directly used trained models by EM')
+
     parser.add_argument('--ncores', type=int, default=1, help='number of cores')
     
     args = parser.parse_args()

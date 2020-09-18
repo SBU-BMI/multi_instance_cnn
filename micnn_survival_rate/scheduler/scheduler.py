@@ -188,46 +188,65 @@ class Scheduler:
         
         random_seed = 42
 
-        for scale in self.scales:
-            
-            ##########################################################
-            ##        Stage 1: E-M training of CNN
-            ##########################################################
+        if not self.args.svm_only:
+            for scale in self.scales:
+                ##########################################################
+                ##        Stage 1: E-M training of CNN
+                ##########################################################
+                fg_mask.set_scale(scale)
+                if self.args.fg:
+                    fg_mask.compute_fg_parallel(self.ncores)
 
-            fg_mask.set_scale(scale)
-            if self.args.fg:
-                fg_mask.compute_fg_parallel(self.ncores)
+                patch_dataset_train.set_scale(scale)
+                patch_dataset_train_4E.set_scale(scale)
+                patch_dataset_test.set_scale(scale)
+                patch_dataset_train.set_round_no(0)
+                patch_dataset_train_4E.set_round_no(0)
+                patch_dataset_test.set_round_no(0)
 
-            patch_dataset_train.set_scale(scale)
-            patch_dataset_train_4E.set_scale(scale)
-            patch_dataset_test.set_scale(scale)
-            patch_dataset_train.set_round_no(0)
-            patch_dataset_train_4E.set_round_no(0)
-            patch_dataset_test.set_round_no(0)
-            
-            cnn_output_dir = self._get_dir(self.cnn_root, scale)
-            mask_dir = self._get_dir(self.mask_root, scale)
-            train_feat_dir = self._get_dir(self.train_feature_root, scale)
-            test_feat_dir = self._get_dir(self.test_feature_root, scale)
-            self.cnn_args['output_dir'] = cnn_output_dir
-            self.cnn_args['mask_dir'] = mask_dir
-            self.cnn_args['no_wsi_id'] = no_wsi_id
-            self.cnn_args['num_cls'] = num_cls
-            
-            trainer = patchcnn_em.PatchCNN_EM(
-                args=self.cnn_args,
-                device=self.device
-            )
+                cnn_output_dir = self._get_dir(self.cnn_root, scale)
+                mask_dir = self._get_dir(self.mask_root, scale)
+                train_feat_dir = self._get_dir(self.train_feature_root, scale)
+                test_feat_dir = self._get_dir(self.test_feature_root, scale)
+                self.cnn_args['output_dir'] = cnn_output_dir
+                self.cnn_args['mask_dir'] = mask_dir
+                self.cnn_args['no_wsi_id'] = no_wsi_id
+                self.cnn_args['num_cls'] = num_cls
 
-            for round_i in range(1, self.n_rounds + 1):
-
-                train_loader = torch.utils.data.DataLoader(
-                    patch_dataset_train,
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    num_workers=self.num_workers,
-                    drop_last=self.drop_last
+                trainer = patchcnn_em.PatchCNN_EM(
+                    args=self.cnn_args,
+                    device=self.device
                 )
+
+                if not args.no_em:
+                    for round_i in range(1, self.n_rounds + 1):
+                        train_loader = torch.utils.data.DataLoader(
+                            patch_dataset_train,
+                            batch_size=self.batch_size,
+                            shuffle=self.shuffle,
+                            num_workers=self.num_workers,
+                            drop_last=self.drop_last
+                        )
+                        eval_loader = torch.utils.data.DataLoader(
+                            patch_dataset_train_4E,
+                            batch_size=self.batch_size,
+                            shuffle=False,
+                            num_workers=self.num_workers,
+                            drop_last=False
+                        )
+                        # need to test to see which loader is faster
+                        # eval_loader = patch_dataset_train_4E.sequential_loader()
+                        ensure_dir('{}/disc_masks_round_{}'.format(mask_dir, round_i))
+                        trainer.set_round_no(round_i)
+                        trainer.set_train_loader(train_loader)
+                        trainer.set_eval_loader(eval_loader)
+                        trainer.m_step()
+                        trainer.e_step()
+                        patch_dataset_train.set_round_no(round_i)
+
+                ##########################################################
+                ##   Stage 2: Compute WSI feature
+                ##########################################################
                 eval_loader = torch.utils.data.DataLoader(
                     patch_dataset_train_4E,
                     batch_size=self.batch_size,
@@ -237,45 +256,24 @@ class Scheduler:
                 )
                 # need to test to see which loader is faster
                 # eval_loader = patch_dataset_train_4E.sequential_loader()
+                ensure_dir(train_feat_dir)
+                trainer.hist_feat(eval_loader, train_feat_dir, self.n_rounds)
 
-                ensure_dir('{}/disc_masks_round_{}'.format(mask_dir, round_i))
-                trainer.set_round_no(round_i)
-                trainer.set_train_loader(train_loader)
-                trainer.set_eval_loader(eval_loader)
-                trainer.m_step()
-                trainer.e_step()
-                patch_dataset_train.set_round_no(round_i)
+                test_loader = torch.utils.data.DataLoader(
+                    patch_dataset_test,
+                    batch_size=self.batch_size,
+                    shuffle=False,
+                    num_workers=self.num_workers,
+                    drop_last=False
+                )
+                # need to test to see which loader is faster
+                # eval_loader = patch_dataset_train_4E.sequential_loader()
 
-            ##########################################################
-            ##   Stage 2: Compute WSI feature
-            ##########################################################
-            eval_loader = torch.utils.data.DataLoader(
-                patch_dataset_train_4E,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=self.num_workers,
-                drop_last=False
-            )
-            # need to test to see which loader is faster
-            # eval_loader = patch_dataset_train_4E.sequential_loader()
-            ensure_dir(train_feat_dir)
-            trainer.hist_feat(eval_loader, train_feat_dir)
-
-            test_loader = torch.utils.data.DataLoader(
-                patch_dataset_test,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=self.num_workers,
-                drop_last=False
-            )
-            # need to test to see which loader is faster
-            # eval_loader = patch_dataset_train_4E.sequential_loader()
-
-            ensure_dir(test_feat_dir)
-            trainer.hist_feat(test_loader, test_feat_dir)
+                ensure_dir(test_feat_dir)
+                trainer.hist_feat(test_loader, test_feat_dir, self.n_rounds)
 
         ##########################################################
-        ##   Stage 2: Training SVM
+        ##   Stage 3: Train SVM
         ##########################################################
         val_test_ratio = self.validation_ratio / (1 - self.train_ratio)
         self.svm_cls = wsi_cls.WSI_cls(
