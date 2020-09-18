@@ -237,15 +237,15 @@ class PatchCNN_EM:
                 patches = patches.to(self.device)
                 outputs = self.net(patches)
                 probs, predict_labels = torch.max(outputs.data, 1)
-                probs = self.sm(probs).cpu()
-
+                probabilities = self.sm(outputs.detach()).cpu()
+                
                 for i in range(wsi_nos.shape[0]):
                     wsi_no = wsi_nos[i].item()
                     label = labels[i].item()
                     col, row = cols[i].item(), rows[i].item()
                     n_cols, n_rows = n_cols_s[i].item(), n_rows_s[i].item()
-                    prob = probs[i].item()
                     predict_label = predict_labels[i].item()
+                    prob = probabilities[i][predict_label].item()
 
                     if prev_wsi_no != wsi_no:
                         if prev_wsi_no >= 0:
