@@ -197,11 +197,14 @@ class PatchCNN_EM:
     def _smooth_save_mask(self, disc_mask, wsi_no):
         wsi_id = self.no_wsi_id[wsi_no]
         valid_mask = torch.load('{0}/disc_masks_round_0/{1}_disc_mask.pth'.format(self.mask_dir, wsi_id))
+        valid_indices = valid_mask.nonzero()
         disc_mask_np = disc_mask.numpy()
         disc_mask_np_sm = ndimage.gaussian_filter(disc_mask_np, sigma=self.smooth_sigma)
-        kmeans = KMeans(n_clusters=2, random_state=0).fit(disc_mask_np_sm.reshape((-1, 1)))
-        kmeans_thre = kmeans.cluster_centers_.mean().item()
-        quantile_thre = np.quantile(disc_mask_np_sm, self.seg_quantile)
+        smoothed_flat = disc_mask_np_sm[valid_indices[:,0], valid_indices[:,1]]
+        smoothed_flat = smoothed_flat[:, np.newaxis]
+        kmeans = KMeans(n_clusters=2, random_state=0).fit(smoothed_flat)
+        kmeans_thre = kmeans.cluster_centers_.mean()
+        quantile_thre = np.quantile(smoothed_flat, self.seg_quantile)
         thre = min(kmeans_thre, quantile_thre)
         disc_mask_np_bin = disc_mask_np_sm >= thre
         disc_mask = torch.from_numpy(disc_mask_np_bin.astype(np.uint8)).type(torch.uint8)
