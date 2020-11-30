@@ -87,10 +87,14 @@ class FG_Mask:
 
     def _load_rgb(self, wsi_tile_list, txy, pxy):
         subfn = '/{}_{}_{}_{}'.format(txy[0], txy[1], self.tile_size[0], self.tile_size[1])
-        
-        wsi_tile_path = find_str_in_list(wsi_tile_list, subfn)
-        wsi_tile = np.array(Image.open(wsi_tile_path[0]))
-        wsi_patch = wsi_tile[pxy[2]-1:pxy[3], pxy[0]-1:pxy[1], :]
+
+        try:
+            wsi_tile_path = find_str_in_list(wsi_tile_list, subfn)
+            wsi_tile = np.array(Image.open(wsi_tile_path[0]))
+            wsi_patch = wsi_tile[pxy[2]-1:pxy[3], pxy[0]-1:pxy[1], :]
+        except:
+            wsi_tile = np.zeros((self.tile_size[0], self.tile_size[1], 3), dtype=np.uint8)
+            wsi_patch = wsi_tile[pxy[2]-1:pxy[3], pxy[0]-1:pxy[1], :]
         
         return wsi_patch, wsi_tile
 
