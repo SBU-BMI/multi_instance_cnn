@@ -200,7 +200,8 @@ class PatchCNN_EM:
         valid_indices = valid_mask.nonzero()
         disc_mask_np = disc_mask.numpy()
         disc_mask_np_sm = ndimage.gaussian_filter(disc_mask_np, sigma=self.smooth_sigma)
-        smoothed_flat = disc_mask_np_sm[valid_indices[:,0], valid_indices[:,1]]
+        # smoothed_flat = disc_mask_np_sm[valid_indices[:,0], valid_indices[:,1]]
+        smoothed_flat = disc_mask_np_sm[valid_indices[0], valid_indices[1]]
         smoothed_flat = smoothed_flat[:, np.newaxis]
         kmeans = KMeans(n_clusters=2, random_state=0).fit(smoothed_flat)
         kmeans_thre = kmeans.cluster_centers_.mean()
